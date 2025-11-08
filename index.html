@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocuBridge - Subir Archivos</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f2f5fa;
+      text-align: center;
+      padding: 40px;
+      color: #333;
+    }
+    h1 {
+      color: #1e3a8a;
+    }
+    form {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+      text-align: left;
+      width: 100%;
+      max-width: 480px;
+    }
+    input[type="file"], input[type="password"] {
+      width: 100%;
+      margin: 12px 0;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: 0.3s;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #1e40af;
+    }
+    #result {
+      margin-top: 25px;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      text-align: left;
+      max-width: 500px;
+      display: inline-block;
+      word-break: break-word;
+    }
+    .link {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📁 DocuBridge</h1>
+  <p>Sube tus archivos de forma segura y genera enlaces temporales de descarga.</p>
+
+  <form id="uploadForm">
+    <label>Seleccionar archivo:</label><br>
+    <input type="file" name="file" required><br>
+    <label>Contraseña (opcional):</label><br>
+    <input type="password" name="password" placeholder="Protege tu archivo"><br>
+    <button type="submit">Subir archivo</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const result = document.getElementById("result");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      result.innerHTML = "⏳ Subiendo archivo...";
+
+      try {
+        const res = await fetch("http://127.0.0.1:5000/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          const fullUrl = `http://127.0.0.1:5000${data.download_url}`;
+          result.innerHTML = `
+            ✅ <b>Archivo subido correctamente</b><br><br>
+            <b>Nombre:</b> ${data.original_name}<br>
+            <b>Tamaño:</b> ${data.size} bytes<br>
+            <b>Tipo MIME:</b> ${data.mime}<br>
+            <b>ID:</b> ${data.file_id}<br>
+            <b>Protegido con contraseña:</b> ${data.password_protected ? "Sí" : "No"}<br><br>
+            <b>Enlace de descarga:</b><br>
+            <a class="link" href="${fullUrl}" target="_blank">${fullUrl}</a><br><br>
+            ⏱ <b>Expira en:</b> ${data.link_expires_in_seconds / 3600} horas
+          `;
+        } else {
+          result.innerHTML = `❌ <b>Error:</b> ${data.error || "Error desconocido"}`;
+        }
+      } catch (err) {
+        result.innerHTML = "❌ Error de conexión con el servidor.";
+      }
+    });
+  </script>
+
+</body>
+</html>
